@@ -1,9 +1,11 @@
 /**
  * @jest-environment jsdom
  */
-const {game, newGame, showScore, addTurn, lightsOn, showTurns} = require('../game');
+const {game, newGame, showScore, addTurn, lightsOn, showTurns, playerTurn} = require('../game');
 
 // const {game} as more tham one obj/func transferred
+
+jest.spyOn(window, 'alert').mockImplementation(() => []);
 
 beforeAll(() => {
     let fs = require('fs');
@@ -32,7 +34,13 @@ describe('game object contains correct keys', () => {
     test('choices contain correct ids', () => {
         expect(game.choices).toEqual(['button1', 'button2', 'button3', 'button4']);
     });
-})
+    test('last button key exists', () => {
+        expect('lastButton' in game).toBe(true);
+    });
+    test('turnInProgress key to be set to false', () => {
+        expect('turnInProgress' in game).toBe(true);
+    });
+});
 
 describe('newGame works correctly', () => {
     beforeAll(() => {
@@ -58,7 +66,13 @@ describe('newGame works correctly', () => {
     test('should display zero for the element with id of score', () => {
         expect(document.getElementById('score').innerText).toEqual(0);
     });
-})
+    test('expect data-listener to be true', () => {
+        const elements = document.getElementsByClassName('circle');
+        for (let element of elements) {
+            expect(element.getAttribute('data-listener')).toEqual('true');
+        }
+    });
+});
 
 describe('gameplay works correctly', () => {
     beforeEach(() => {
@@ -86,6 +100,26 @@ describe('gameplay works correctly', () => {
         showTurns();
         expect(game.turnNumber).toBe(0);
     });
-})
+    test('increment the score if the turn is correct', () => {
+        game.playerMoves.push(game.currentGame[0]);
+        playerTurn();
+        expect(game.score).toBe(1);
+    });
+    test('should call an alert of the move is wrong', () => {
+        game.playerMoves.push('wrong');
+        playerTurn();
+        expect(window.alert).toBeCalledWith('Wrong move!');
+    });
+    test('should toggle turnInProgress to true', () => {
+        showTurns();
+        expect(game.turnInProgress).toBe(true);
+    });
+    test('clicking during computer sequence should fail', () => {
+        showTurns();
+        game.lastButton = '';
+        document.getElementById('button2').click();
+        expect(game.lastButton).toEqual('');
+    });
+});
 
 
